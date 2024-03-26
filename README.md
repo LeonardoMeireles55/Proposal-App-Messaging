@@ -4,11 +4,13 @@ This is a microservices application for managing proposals.
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Technologies](#technologies)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
+- [Proposal App](#proposal-app)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Technologies](#technologies)
+  - [Installation](#installation)
+  - [Usage](#usage)
+  - [Contributing](#contributing)
 
 ## Introduction
 
@@ -30,17 +32,17 @@ To run the Proposal App locally, follow these steps:
 1. Clone the repository:
 
     ```shell
-    git clone https://github.com/your-username/proposal-app.git
+    git clone https://github.com/leonardomeirels55/proposal-app.git
     ```
 
 2. Configure the application properties:
 
-    Open the `application.properties` file located in `src/main/resources` and update the database connection details and RabbitMQ configuration according to your environment.
+    Open the `application.properties` file located in `src/main/resources` and update the database connection details and RabbitMQ configuration according to your environment or env in `docker-compose`.
 
 3. Run the application:
 
     ```shell
-    mvn spring-boot:run
+    docker compose up or docker-compose up
     ```
 
 ## Usage
@@ -49,39 +51,27 @@ Once the application is running, you can access the API endpoints using a tool l
 
 - Create a new proposal:
     ```http
-    POST /proposals
+    POST /proposal
     Content-Type: application/json
-
-    {
-        "title": "Sample Proposal",
-        "description": "This is a sample proposal"
-    }
+{
+  "nome": "leonardo",
+  "sobrenome": "meireles",
+  "telefone": "55999999",
+  "cpf": "111.111.111.11",
+  "renda": 100,
+  "valorSolicitado": 1000,
+  "prazoPagamento": 24
+}
     ```
 
 - Get all proposals:
     ```http
-    GET /proposals
+    GET /proposal
     ```
 
 - Get a specific proposal:
     ```http
-    GET /proposals/{proposalId}
-    ```
-
-- Update a proposal:
-    ```http
-    PUT /proposals/{proposalId}
-    Content-Type: application/json
-
-    {
-        "title": "Updated Proposal",
-        "description": "This is an updated proposal"
-    }
-    ```
-
-- Delete a proposal:
-    ```http
-    DELETE /proposals/{proposalId}
+    GET /proposal/{id}
     ```
 
 ## Contributing
