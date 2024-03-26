@@ -33,18 +33,11 @@ To run the Proposal App locally, follow these steps:
     git clone https://github.com/your-username/proposal-app.git
     ```
 
-2. Install the required dependencies:
-
-    ```shell
-    cd proposal-app
-    mvn install
-    ```
-
-3. Configure the application properties:
+2. Configure the application properties:
 
     Open the `application.properties` file located in `src/main/resources` and update the database connection details and RabbitMQ configuration according to your environment.
 
-4. Run the application:
+3. Run the application:
 
     ```shell
     mvn spring-boot:run
