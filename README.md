@@ -24,6 +24,7 @@ The following technologies are used in this project:
 - Spring Boot
 - RabbitMQ
 - PostgreSQL
+- Docker
 
 ## Installation
 
@@ -63,7 +64,6 @@ Once the application is running, you can access the API endpoints using a tool l
         "valorSolicitado": 1000,
         "prazoPagamento": 24
         }
-    ```
 - Get all proposals:
     ```http
     GET /proposal
