@@ -17,6 +17,26 @@ services:
     depends_on:
       rabbit-mq:
         condition: service_healthy
+  notification-app:
+    image: leonardomeireles55/notification-app:latest
+    environment:
+      - 'SPRING_RABBITMQ_HOST=rabbit-mq'
+      - 'SPRING_RABBITMQ_PORT=5672'
+      - 'SPRING_RABBITMQ_USERNAME=guest'
+      - 'SPRING_RABBITMQ_PASSWORD=guest'
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+  credit-analysis-app:
+    image: leonardomeireles55/credit-analysis-app:latest
+    environment:
+      - 'SPRING_RABBITMQ_HOST=rabbit-mq'
+      - 'SPRING_RABBITMQ_PORT=5672'
+      - 'SPRING_RABBITMQ_USERNAME=guest'
+      - 'SPRING_RABBITMQ_PASSWORD=guest'
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
   postgres:
     image: 'postgres:latest'
     environment:
