@@ -64,7 +64,6 @@ Once the application is running, you can access the API endpoints using a tool l
         "prazoPagamento": 24
         }
     ```
-
 - Get all proposals:
     ```http
     GET /proposal
