@@ -53,15 +53,16 @@ Once the application is running, you can access the API endpoints using a tool l
     ```http
     POST /proposal
     Content-Type: application/json
-{
-  "nome": "leonardo",
-  "sobrenome": "meireles",
-  "telefone": "55999999",
-  "cpf": "111.111.111.11",
-  "renda": 100,
-  "valorSolicitado": 1000,
-  "prazoPagamento": 24
-}
+    ```
+        {
+        "nome": "leonardo",
+        "sobrenome": "meireles",
+        "telefone": "55999999",
+        "cpf": "111.111.111.11",
+        "renda": 100,
+        "valorSolicitado": 1000,
+        "prazoPagamento": 24
+        }
     ```
 
 - Get all proposals:
