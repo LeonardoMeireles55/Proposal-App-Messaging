@@ -6,8 +6,8 @@ import com.leonardo.propostaapp.entity.User;
 public record ProposalRequest(
                 String nome,
                 String sobrenome,
-                String telefone,
                 String cpf,
+                String telefone,
                 Double renda,
                 Double valorSolicitado,
                 int prazoPagamento) {
@@ -18,6 +18,6 @@ public record ProposalRequest(
 
         public User toUser() {
                 return new User(null, this.nome(), this.sobrenome(),
-                                this.telefone(), this.cpf(), this.renda(), null);
+                                this.cpf(), this.telefone(), this.renda(), null);
         }
 }
