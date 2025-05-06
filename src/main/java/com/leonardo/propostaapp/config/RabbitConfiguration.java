@@ -1,6 +1,11 @@
 package com.leonardo.propostaapp.config;
 
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.ExchangeBuilder;
+import org.springframework.amqp.core.FanoutExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -12,8 +17,22 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configuration for RabbitMQ messaging. Sets up exchanges, queues, bindings,
+ * and message converters.
+ */
 @Configuration
 public class RabbitConfiguration {
+
+    // Queue names
+    private static final String PENDING_PROPOSAL_CREDIT_ANALYSIS_QUEUE = "pending-proposal.ms-credit-analysis";
+    private static final String PENDING_PROPOSAL_DLQ = "pending-proposal.dlq";
+    private static final String PENDING_PROPOSAL_NOTIFICATION_QUEUE = "pending-proposal.ms-notification";
+    private static final String COMPLETED_PROPOSAL_QUEUE = "completed-proposal.ms-proposal";
+    private static final String COMPLETED_PROPOSAL_NOTIFICATION_QUEUE = "completed-proposal.ms-notification";
+
+    // Exchange names
+    private static final String PENDING_PROPOSAL_DLX = "pending-proposal-dlx.ex";
 
     @Value("${rabbitmq.pending-proposal.exchange}")
     private String pendingProposalExchange;
@@ -21,98 +40,170 @@ public class RabbitConfiguration {
     @Value("${rabbitmq.completed-proposal.exchange}")
     private String completedProposalExchange;
 
+    /**
+     * Queue configuration section
+     */
+
+    /**
+     * Creates a queue for pending proposals to be analyzed by the credit
+     * analysis service. Includes dead letter and priority configuration.
+     */
     @Bean
-    public Queue createPendingProposalQueueForCreditAnalysis() {
-        return QueueBuilder.durable("pending-proposal.ms-credit-analysis")
-                .deadLetterExchange("pending-proposal-dlx.ex").maxPriority(10)
+    Queue createPendingProposalQueueForCreditAnalysis() {
+        return QueueBuilder.durable(PENDING_PROPOSAL_CREDIT_ANALYSIS_QUEUE)
+                .deadLetterExchange(PENDING_PROPOSAL_DLX)
+                .maxPriority(10)
                 .build();
     }
 
+    /**
+     * Creates a dead letter queue for failed proposal messages.
+     */
     @Bean
-    public Queue createPendingProposalDeadLetterQueue() {
-        return QueueBuilder.durable("pending-proposal.dlq").build();
+    Queue createPendingProposalDeadLetterQueue() {
+        return QueueBuilder.durable(PENDING_PROPOSAL_DLQ).build();
     }
 
+    /**
+     * Creates a queue for pending proposal notifications.
+     */
     @Bean
-    public FanoutExchange deadLetterExchange() {
-        return ExchangeBuilder.fanoutExchange("pending-proposal-dlx.ex").build();
+    Queue createPendingProposalNotificationQueue() {
+        return QueueBuilder.durable(PENDING_PROPOSAL_NOTIFICATION_QUEUE).build();
     }
 
+    /**
+     * Creates a queue for completed proposals to be processed by the proposal
+     * app.
+     */
     @Bean
-    public Binding createBinding() {
-        return BindingBuilder.bind(createPendingProposalDeadLetterQueue()).to(deadLetterExchange());
+    Queue createCompletedProposalQueueForProposal() {
+        return QueueBuilder.durable(COMPLETED_PROPOSAL_QUEUE).build();
     }
 
+    /**
+     * Creates a queue for completed proposal notifications.
+     */
     @Bean
-    public Queue createPendingProposalNotificationQueue() {
-        return QueueBuilder.durable("pending-proposal.ms-notification").build();
+    Queue createCompletedProposalNotificationQueue() {
+        return QueueBuilder.durable(COMPLETED_PROPOSAL_NOTIFICATION_QUEUE).build();
     }
 
+    /**
+     * Exchange configuration section
+     */
+
+    /**
+     * Creates a dead letter exchange for handling failed messages.
+     */
     @Bean
-    public Queue createCompletedProposalQueueForProposal() {
-        return QueueBuilder.durable("completed-proposal.ms-proposal").build();
+    FanoutExchange deadLetterExchange() {
+        return ExchangeBuilder.fanoutExchange(PENDING_PROPOSAL_DLX).build();
     }
 
+    /**
+     * Creates a fanout exchange for pending proposals.
+     */
     @Bean
-    public Queue createCompletedProposalNotificationQueue() {
-        return QueueBuilder.durable("completed-proposal.ms-notification").build();
-    }
-
-    @Bean
-    public RabbitAdmin createRabbitAdmin(ConnectionFactory connectionFactory) {
-        return new RabbitAdmin(connectionFactory);
-    }
-
-    @Bean
-    public ApplicationListener<ApplicationReadyEvent> initializeAdmin(RabbitAdmin rabbitAdmin) {
-        return event -> rabbitAdmin.initialize();
-    }
-
-    @Bean
-    public FanoutExchange createFanoutExchangePendingProposal() {
+    FanoutExchange createFanoutExchangePendingProposal() {
         return ExchangeBuilder.fanoutExchange(pendingProposalExchange).build();
     }
 
+    /**
+     * Creates a fanout exchange for completed proposals.
+     */
     @Bean
-    public FanoutExchange createFanoutExchangeCompletedProposal() {
+    FanoutExchange createFanoutExchangeCompletedProposal() {
         return ExchangeBuilder.fanoutExchange(completedProposalExchange).build();
     }
 
+    /**
+     * Binding configuration section
+     */
+
+    /**
+     * Binds the dead letter queue to the dead letter exchange.
+     */
     @Bean
-    public Binding createBindingPendingProposalMSCreditAnalysis() {
+    Binding createDeadLetterBinding() {
+        return BindingBuilder.bind(createPendingProposalDeadLetterQueue()).to(deadLetterExchange());
+    }
+
+    /**
+     * Binds the pending proposal queue for credit analysis to the pending
+     * proposal exchange.
+     */
+    @Bean
+    Binding createBindingPendingProposalMSCreditAnalysis() {
         return BindingBuilder.bind(createPendingProposalQueueForCreditAnalysis())
                 .to(createFanoutExchangePendingProposal());
     }
 
+    /**
+     * Binds the pending proposal notification queue to the pending proposal
+     * exchange.
+     */
     @Bean
-    public Binding createBindingPendingProposalMSNotification() {
-        return BindingBuilder.bind(createPendingProposalNotificationQueue()).to(createFanoutExchangePendingProposal());
+    Binding createBindingPendingProposalMSNotification() {
+        return BindingBuilder.bind(createPendingProposalNotificationQueue())
+                .to(createFanoutExchangePendingProposal());
     }
 
+    /**
+     * Binds the completed proposal queue to the completed proposal exchange.
+     */
     @Bean
-    public Binding createBindingCompletedProposalMSProposalApp() {
+    Binding createBindingCompletedProposalMSProposalApp() {
         return BindingBuilder.bind(createCompletedProposalQueueForProposal())
                 .to(createFanoutExchangeCompletedProposal());
     }
 
+    /**
+     * Binds the completed proposal notification queue to the completed proposal
+     * exchange.
+     */
     @Bean
-    public Binding createBindingCompletedProposalMSNotification() {
+    Binding createBindingCompletedProposalMSNotification() {
         return BindingBuilder.bind(createCompletedProposalNotificationQueue())
                 .to(createFanoutExchangeCompletedProposal());
     }
 
+    /**
+     * RabbitMQ infrastructure configuration section
+     */
+
+    /**
+     * Creates a RabbitAdmin bean for managing RabbitMQ objects.
+     */
     @Bean
-    public MessageConverter jackson2JsonMessageConverter() {
+    RabbitAdmin createRabbitAdmin(ConnectionFactory connectionFactory) {
+        return new RabbitAdmin(connectionFactory);
+    }
+
+    /**
+     * Initializes RabbitAdmin when the application is ready.
+     */
+    @Bean
+    ApplicationListener<ApplicationReadyEvent> initializeAdmin(RabbitAdmin rabbitAdmin) {
+        return event -> rabbitAdmin.initialize();
+    }
+
+    /**
+     * Creates a Jackson-based message converter for converting objects to/from
+     * JSON.
+     */
+    @Bean
+    MessageConverter jackson2JsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
+    /**
+     * Creates a RabbitTemplate with our custom message converter.
+     */
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate();
-        
-        rabbitTemplate.setConnectionFactory(connectionFactory);
+    RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(jackson2JsonMessageConverter());
-
         return rabbitTemplate;
     }
 }
